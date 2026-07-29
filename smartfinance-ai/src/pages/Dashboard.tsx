@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import chicoImg from '../assets/Chico.png'
+import type { ExpenseItem } from './ExpenseRegister'
+import type { Bill } from './BillsAndInvoices'
 
 interface DashboardProps {
   username?: string
@@ -18,12 +20,42 @@ export function Dashboard({
   onBillsAndInvoices,
   onProfile,
 }: DashboardProps) {
-  // Estado para armazenar as moedas/ações favoritadas (até 3)
   const [favoriteAssets] = useState([
     { symbol: 'BTC/BRL', name: 'Bitcoin', price: 'R$ 385.420,00', change: '+2.4%' },
     { symbol: 'USD/BRL', name: 'Dólar Comercial', price: 'R$ 5,45', change: '-0.3%' },
     { symbol: 'PETR4', name: 'Petrobras PN', price: 'R$ 37,80', change: '+1.1%' },
   ])
+
+  const [weeklyExpenseTotal, setWeeklyExpenseTotal] = useState(680.5)
+  const [pendingBillsTotal, setPendingBillsTotal] = useState(210.0)
+  const [topCategory, setTopCategory] = useState('Mercado')
+
+  useEffect(() => {
+    const savedExpenses: ExpenseItem[] = JSON.parse(localStorage.getItem('oncoin_expenses') || '[]')
+    if (savedExpenses.length > 0) {
+      const total = savedExpenses
+        .filter((item) => item.type === 'comum')
+        .reduce((sum, item) => sum + item.amount, 0)
+      setWeeklyExpenseTotal(total > 0 ? total : 680.5)
+
+      const categoriesCount: Record<string, number> = {}
+      savedExpenses.forEach((item) => {
+        categoriesCount[item.category] = (categoriesCount[item.category] || 0) + item.amount
+      })
+      const highestCategory = Object.keys(categoriesCount).reduce((a, b) =>
+        categoriesCount[a] > categoriesCount[b] ? a : b
+      , 'Mercado')
+      setTopCategory(highestCategory)
+    }
+
+    const savedBills: Bill[] = JSON.parse(localStorage.getItem('oncoin_bills') || '[]')
+    if (savedBills.length > 0) {
+      const pendingTotal = savedBills
+        .filter((bill) => bill.status === 'pending' || bill.status === 'overdue')
+        .reduce((sum, bill) => sum + bill.amount, 0)
+      setPendingBillsTotal(pendingTotal)
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-chico-dark text-chico-cream pb-12">
@@ -31,8 +63,8 @@ export function Dashboard({
       <header className="bg-chico-dark/80 backdrop-blur-md border-b border-chico-gold/20 sticky top-0 z-10 px-4 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-chico-cream/10 border border-chico-gold p-1 flex items-center justify-center">
-              <img src={chicoImg} alt="Chico" className="w-full h-full object-contain" />
+            <div className="w-10 h-10 rounded-full bg-chico-cream/10 border border-chico-gold p-1 flex items-center justify-center animate-gold-glow">
+              <img src={chicoImg} alt="Chico" className="w-full h-full object-contain animate-chico-float" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-chico-gold leading-tight">
@@ -78,41 +110,38 @@ export function Dashboard({
         {/* Grade do Resumo Semanal */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
           
-          {/* Card 1: Gastos da Semana */}
-          <div className="bg-chico-cream/5 border border-chico-gold/20 rounded-2xl p-5 hover:border-chico-gold/40 transition-all">
+          <div className="bg-chico-cream/5 border border-chico-gold/20 rounded-2xl p-5 hover:border-chico-gold/50 hover:bg-chico-cream/10 transition-all duration-300">
             <div className="flex justify-between items-start mb-3">
-              <span className="text-xs text-chico-sand uppercase font-semibold">Gastos da Semana</span>
+              <span className="text-xs text-chico-sand uppercase font-semibold">Gastos Cadastrados</span>
               <span className="text-xl">💸</span>
             </div>
-            <p className="text-2xl font-bold text-chico-cream">R$ 680,50</p>
+            <p className="text-2xl font-bold text-chico-cream">R$ {weeklyExpenseTotal.toFixed(2)}</p>
             <div className="mt-3 pt-3 border-t border-chico-gold/10 text-xs text-chico-slate flex justify-between">
-              <span>Maior gasto:</span>
-              <span className="text-chico-sand font-medium">Mercado (R$ 320,00)</span>
+              <span>Maior categoria:</span>
+              <span className="text-chico-sand font-medium">{topCategory}</span>
             </div>
           </div>
 
-          {/* Card 2: Pagamentos Pendentes */}
-          <div className="bg-chico-cream/5 border border-chico-gold/20 rounded-2xl p-5 hover:border-chico-gold/40 transition-all">
+          <div className="bg-chico-cream/5 border border-chico-gold/20 rounded-2xl p-5 hover:border-chico-gold/50 hover:bg-chico-cream/10 transition-all duration-300">
             <div className="flex justify-between items-start mb-3">
-              <span className="text-xs text-chico-sand uppercase font-semibold">A Pagar na Semana</span>
+              <span className="text-xs text-chico-sand uppercase font-semibold">A Pagar em Faturas</span>
               <span className="text-xl">⏳</span>
             </div>
-            <p className="text-2xl font-bold text-chico-gold">R$ 210,00</p>
+            <p className="text-2xl font-bold text-chico-gold">R$ {pendingBillsTotal.toFixed(2)}</p>
             <div className="mt-3 pt-3 border-t border-chico-gold/10 text-xs text-chico-slate flex justify-between">
-              <span>Próximo vencimento:</span>
-              <span className="text-red-400 font-medium">Internet (Amanhã)</span>
+              <span>Status geral:</span>
+              <span className="text-chico-sand font-medium">Sincronizado no navegador</span>
             </div>
           </div>
 
-          {/* Card 3: Lembrete do Chico */}
-          <div className="bg-chico-cream/5 border border-chico-gold/20 rounded-2xl p-5 hover:border-chico-gold/40 transition-all flex flex-col justify-between">
+          <div className="bg-chico-cream/5 border border-chico-gold/20 rounded-2xl p-5 hover:border-chico-gold/50 hover:bg-chico-cream/10 transition-all duration-300 flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-start mb-2">
                 <span className="text-xs text-chico-gold uppercase font-bold">Lembrete do Chico</span>
-                <span className="text-xl">💡</span>
+                <span className="text-xl animate-bounce">💡</span>
               </div>
               <p className="text-xs text-chico-cream leading-relaxed">
-                "Você já cumpriu <strong className="text-chico-gold">70%</strong> da sua meta de economia mensal! Continue assim!"
+                "Seus dados estão salvos localmente com segurança! Continue monitorando suas metas."
               </p>
             </div>
             <div className="mt-3 w-full bg-chico-cream/10 h-2 rounded-full overflow-hidden">
@@ -122,7 +151,7 @@ export function Dashboard({
 
         </section>
 
-        {/* Widget de Cotação de Ações e Moedas (Até 3 cadastradas) */}
+        {/* Widget de Cotação de Ações e Moedas */}
         <section className="bg-chico-cream/5 border border-chico-gold/20 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -138,7 +167,7 @@ export function Dashboard({
             {favoriteAssets.map((asset, idx) => (
               <div
                 key={idx}
-                className="bg-chico-dark border border-chico-gold/20 rounded-2xl p-4 flex flex-col justify-between"
+                className="bg-chico-dark border border-chico-gold/20 rounded-2xl p-4 flex flex-col justify-between hover:border-chico-gold/60 hover:-translate-y-0.5 transition-all duration-200"
               >
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs font-bold text-chico-sand">{asset.symbol}</span>
@@ -163,33 +192,33 @@ export function Dashboard({
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <button 
             onClick={onNewExpense}
-            className="bg-chico-gold/10 border border-chico-gold/30 hover:bg-chico-gold/20 text-chico-cream p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer group"
+            className="bg-chico-gold/10 border border-chico-gold/30 hover:bg-chico-gold/20 hover:border-chico-gold text-chico-cream p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all duration-200 cursor-pointer group hover:-translate-y-1 shadow-lg"
           >
-            <span className="text-2xl group-hover:scale-110 transition-transform">➕</span>
+            <span className="text-2xl group-hover:scale-125 transition-transform duration-200">➕</span>
             <span className="text-xs font-bold text-chico-gold">Novo Gasto</span>
           </button>
 
           <button 
             onClick={onShoppingLists}
-            className="bg-chico-gold/10 border border-chico-gold/30 hover:bg-chico-gold/20 text-chico-cream p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer group"
+            className="bg-chico-gold/10 border border-chico-gold/30 hover:bg-chico-gold/20 hover:border-chico-gold text-chico-cream p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all duration-200 cursor-pointer group hover:-translate-y-1 shadow-lg"
           >
-            <span className="text-2xl group-hover:scale-110 transition-transform">🛒</span>
+            <span className="text-2xl group-hover:scale-125 transition-transform duration-200">🛒</span>
             <span className="text-xs font-bold text-chico-gold">Listas de Compras</span>
           </button>
 
           <button 
             onClick={onBillsAndInvoices}
-            className="bg-chico-gold/10 border border-chico-gold/30 hover:bg-chico-gold/20 text-chico-cream p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer group"
+            className="bg-chico-gold/10 border border-chico-gold/30 hover:bg-chico-gold/20 hover:border-chico-gold text-chico-cream p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer group hover:-translate-y-1 shadow-lg"
           >
-            <span className="text-2xl group-hover:scale-110 transition-transform">📄</span>
+            <span className="text-2xl group-hover:scale-125 transition-transform duration-200">📄</span>
             <span className="text-xs font-bold text-chico-gold">Contas & Faturas</span>
           </button>
 
           <button 
             onClick={onProfile}
-            className="bg-chico-gold/10 border border-chico-gold/30 hover:bg-chico-gold/20 text-chico-cream p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer group"
+            className="bg-chico-gold/10 border border-chico-gold/30 hover:bg-chico-gold/20 hover:border-chico-gold text-chico-cream p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer group hover:-translate-y-1 shadow-lg"
           >
-            <span className="text-2xl group-hover:scale-110 transition-transform">👤</span>
+            <span className="text-2xl group-hover:scale-125 transition-transform duration-200">👤</span>
             <span className="text-xs font-bold text-chico-gold">Meu Perfil</span>
           </button>
         </section>

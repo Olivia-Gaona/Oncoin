@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import chicoImg from '../assets/Chico.png'
 
 interface ShoppingListsProps {
@@ -19,38 +19,42 @@ interface ShoppingList {
   items: Item[]
 }
 
+const defaultLists: ShoppingList[] = [
+  {
+    id: '1',
+    title: 'Compras Mercado',
+    icon: '🛒',
+    items: [
+      { id: '101', name: 'Café em grãos', price: 32.5, completed: true },
+      { id: '102', name: 'Leite vegetal', price: 14.0, completed: false },
+      { id: '103', name: 'Frutas da estação', price: 45.0, completed: false },
+    ],
+  },
+  {
+    id: '2',
+    title: 'Compras Amazon',
+    icon: '📦',
+    items: [
+      { id: '201', name: 'Livro de Finanças', price: 59.9, completed: false },
+      { id: '202', name: 'Cabo USB-C', price: 29.0, completed: true },
+    ],
+  },
+  {
+    id: '3',
+    title: 'Compras Farmácia',
+    icon: '💊',
+    items: [
+      { id: '301', name: 'Protetor Solar', price: 68.0, completed: false },
+      { id: '302', name: 'Vitamina C', price: 35.0, completed: true },
+    ],
+  },
+]
+
 export function ShoppingLists({ onBack }: ShoppingListsProps) {
-  // Listas pré-cadastradas baseadas no seu briefing (Mercado, Amazon, Farmácia)
-  const [lists, setLists] = useState<ShoppingList[]>([
-    {
-      id: '1',
-      title: 'Compras Mercado',
-      icon: '🛒',
-      items: [
-        { id: '101', name: 'Café em grãos', price: 32.5, completed: true },
-        { id: '102', name: 'Leite vegetal', price: 14.0, completed: false },
-        { id: '103', name: 'Frutas da estação', price: 45.0, completed: false },
-      ],
-    },
-    {
-      id: '2',
-      title: 'Compras Amazon',
-      icon: '📦',
-      items: [
-        { id: '201', name: 'Livro de Finanças', price: 59.9, completed: false },
-        { id: '202', name: 'Cabo USB-C', price: 29.0, completed: true },
-      ],
-    },
-    {
-      id: '3',
-      title: 'Compras Farmácia',
-      icon: '💊',
-      items: [
-        { id: '301', name: 'Protetor Solar', price: 68.0, completed: false },
-        { id: '302', name: 'Vitamina C', price: 35.0, completed: true },
-      ],
-    },
-  ])
+  const [lists, setLists] = useState<ShoppingList[]>(() => {
+    const saved = localStorage.getItem('oncoin_shopping_lists')
+    return saved ? JSON.parse(saved) : defaultLists
+  })
 
   const [activeListId, setActiveListId] = useState<string>('1')
   const [newItemName, setNewItemName] = useState('')
@@ -58,12 +62,16 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
   const [newListTitle, setNewListTitle] = useState('')
   const [showAddListModal, setShowAddListModal] = useState(false)
 
+  // Atualiza localStorage sempre que as listas mudarem
+  useEffect(() => {
+    localStorage.setItem('oncoin_shopping_lists', JSON.stringify(lists))
+  }, [lists])
+
   const activeList = lists.find((l) => l.id === activeListId) || lists[0]
 
-  // Alternar checkbox de item comprado
   const toggleItem = (itemId: string) => {
-    setLists(
-      lists.map((list) => {
+    setLists((prev) =>
+      prev.map((list) => {
         if (list.id !== activeListId) return list
         return {
           ...list,
@@ -75,7 +83,6 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
     )
   }
 
-  // Adicionar novo item na lista ativa
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newItemName) return
@@ -87,8 +94,8 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
       completed: false,
     }
 
-    setLists(
-      lists.map((list) =>
+    setLists((prev) =>
+      prev.map((list) =>
         list.id === activeListId
           ? { ...list, items: [...list.items, newItem] }
           : list
@@ -99,7 +106,6 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
     setNewItemPrice('')
   }
 
-  // Criar nova lista personalizada
   const handleCreateList = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newListTitle) return
@@ -111,13 +117,12 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
       items: [],
     }
 
-    setLists([...lists, newList])
+    setLists((prev) => [...prev, newList])
     setActiveListId(newList.id)
     setNewListTitle('')
     setShowAddListModal(false)
   }
 
-  // Totais
   const totalListValue = activeList.items.reduce((acc, item) => acc + item.price, 0)
   const totalCompletedValue = activeList.items
     .filter((i) => i.completed)
@@ -125,7 +130,6 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
 
   return (
     <div className="min-h-screen bg-chico-dark text-chico-cream p-4 pb-12">
-      {/* Topo / Header */}
       <div className="max-w-4xl mx-auto flex items-center justify-between py-4 border-b border-chico-gold/20">
         <button
           onClick={onBack}
@@ -140,8 +144,6 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
       </div>
 
       <main className="max-w-4xl mx-auto mt-6 space-y-6">
-        
-        {/* Cabeçalho */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-chico-gold">Listas de Compras 🛒</h2>
@@ -158,7 +160,6 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
           </button>
         </div>
 
-        {/* Abas das Listas */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
           {lists.map((list) => (
             <button
@@ -179,13 +180,8 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
           ))}
         </div>
 
-        {/* Conteúdo da Lista Selecionada */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Coluna Esquerda: Itens da Lista */}
           <div className="md:col-span-2 space-y-4">
-            
-            {/* Formulário para Adicionar Item */}
             <form
               onSubmit={handleAddItem}
               className="bg-chico-cream/5 border border-chico-gold/20 rounded-2xl p-4 flex flex-col sm:flex-row gap-2"
@@ -213,7 +209,6 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
               </button>
             </form>
 
-            {/* Checkbox List */}
             <div className="bg-chico-cream/5 border border-chico-gold/20 rounded-2xl p-4 space-y-2">
               {activeList.items.length === 0 ? (
                 <p className="text-xs text-chico-slate text-center py-6">
@@ -253,10 +248,8 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
                 ))
               )}
             </div>
-
           </div>
 
-          {/* Coluna Direita: Card de Resumo da Lista */}
           <div className="space-y-4">
             <div className="bg-gradient-to-br from-chico-cream/10 to-chico-dark border border-chico-gold/30 rounded-2xl p-5 space-y-4">
               <h3 className="text-sm font-bold text-chico-gold uppercase tracking-wider flex items-center gap-2">
@@ -280,7 +273,6 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
                 </div>
               </div>
 
-              {/* Dica do Chico */}
               <div className="bg-chico-dark/60 p-3 rounded-xl border border-chico-gold/20 flex gap-2 items-start">
                 <span className="text-base">🐆</span>
                 <p className="text-[11px] text-chico-sand leading-relaxed">
@@ -289,10 +281,8 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
               </div>
             </div>
           </div>
-
         </div>
 
-        {/* Modal de Criar Nova Lista */}
         {showAddListModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-chico-dark border border-chico-gold/40 rounded-2xl p-6 w-full max-w-sm space-y-4">
@@ -328,7 +318,6 @@ export function ShoppingLists({ onBack }: ShoppingListsProps) {
             </div>
           </div>
         )}
-
       </main>
     </div>
   )

@@ -14,52 +14,66 @@ export function App() {
   const [loggedUser] = useState('OliviaGaona')
 
   return (
-    <div>
+    <div className="min-h-screen bg-chico-dark font-sans selection:bg-chico-gold selection:text-chico-dark">
       {currentPage === 'login' && (
-        <Login
-          onNavigateToRegister={() => setCurrentPage('register')}
-          onLoginSuccess={() => setCurrentPage('home')}
-        />
+        <div key="login" className="animate-page-entry">
+          <Login
+            onNavigateToRegister={() => setCurrentPage('register')}
+            onLoginSuccess={() => setCurrentPage('home')}
+          />
+        </div>
       )}
 
       {currentPage === 'register' && (
-        <Register
-          onNavigateToLogin={() => setCurrentPage('login')}
-          onRegisterSuccess={() => setCurrentPage('home')}
-        />
+        <div key="register" className="animate-page-entry">
+          <Register
+            onNavigateToLogin={() => setCurrentPage('login')}
+            onRegisterSuccess={() => setCurrentPage('home')}
+          />
+        </div>
       )}
 
       {currentPage === 'home' && (
-        <Dashboard
-          username={loggedUser}
-          onLogout={() => setCurrentPage('login')}
-          onNewExpense={() => setCurrentPage('new-expense')}
-          onShoppingLists={() => setCurrentPage('shopping-lists')}
-          onBillsAndInvoices={() => setCurrentPage('bills')}
-          onProfile={() => setCurrentPage('profile')}
-        />
+        <div key="home" className="animate-page-entry">
+          <Dashboard
+            username={loggedUser}
+            onLogout={() => setCurrentPage('login')}
+            onNewExpense={() => setCurrentPage('new-expense')}
+            onShoppingLists={() => setCurrentPage('shopping-lists')}
+            onBillsAndInvoices={() => setCurrentPage('bills')}
+            onProfile={() => setCurrentPage('profile')}
+          />
+        </div>
       )}
 
       {currentPage === 'new-expense' && (
-        <ExpenseRegister
-          onBack={() => setCurrentPage('home')}
-          onSave={() => setCurrentPage('home')}
-        />
+        <div key="new-expense" className="animate-page-entry">
+          <ExpenseRegister
+            onBack={() => setCurrentPage('home')}
+            onSave={() => setCurrentPage('home')}
+          />
+        </div>
       )}
 
       {currentPage === 'shopping-lists' && (
-        <ShoppingLists onBack={() => setCurrentPage('home')} />
+        <div key="shopping-lists" className="animate-page-entry">
+          <ShoppingLists onBack={() => setCurrentPage('home')} />
+        </div>
       )}
 
       {currentPage === 'bills' && (
-        <BillsAndInvoices onBack={() => setCurrentPage('home')} />
+        <div key="bills" className="animate-page-entry">
+          <BillsAndInvoices onBack={() => setCurrentPage('home')} />
+        </div>
       )}
 
       {currentPage === 'profile' && (
-        <UserProfile
-          username={loggedUser}
-          onBack={() => setCurrentPage('home')}
-        />
+        <div key="profile" className="animate-page-entry">
+          <UserProfile
+            username={loggedUser}
+            onBack={() => setCurrentPage('home')}
+          />
+        </div>
       )}
     </div>
   )

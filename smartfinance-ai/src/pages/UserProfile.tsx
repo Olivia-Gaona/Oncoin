@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import chicoImg from '../assets/Chico.png'
+import type { ExpenseItem } from './ExpenseRegister'
+import type { Bill } from './BillsAndInvoices'
 
 interface UserProfileProps {
   username?: string
@@ -10,12 +12,33 @@ export function UserProfile({ username = 'OliviaGaona', onBack }: UserProfilePro
   const [bio, setBio] = useState('tentando meu melhor 🐆✨')
   const [isEditingBio, setIsEditingBio] = useState(false)
 
+  // Estados do Simulador de Investimentos (Usando string no input)
+  const [monthlyContribution, setMonthlyContribution] = useState<string>('300')
+  const [simulationMonths, setSimulationMonths] = useState<number>(12)
+  const [cdiRate] = useState<number>(0.105)
+
+  // Conversão para número
+  const numContribution = parseFloat(monthlyContribution) || 0
+
+  const calculateInvestment = () => {
+    let total = 0
+    const monthlyRate = cdiRate / 12
+    for (let i = 0; i < simulationMonths; i++) {
+      total = (total + numContribution) * (1 + monthlyRate)
+    }
+    return total
+  }
+
+  const simulatedTotal = calculateInvestment()
+  const totalInvested = numContribution * simulationMonths
+  const totalProfit = simulatedTotal - totalInvested
+
   // Metas de Economia
   const [savedAmount] = useState(3500.0)
   const [targetAmount] = useState(5000.0)
   const progressPercentage = Math.min(Math.round((savedAmount / targetAmount) * 100), 100)
 
-  // Recados e Alertas do Chico
+  // Recados do Chico
   const [alerts] = useState([
     {
       id: '1',
@@ -43,6 +66,30 @@ export function UserProfile({ username = 'OliviaGaona', onBack }: UserProfilePro
     },
   ])
 
+  // Função para exportar os dados em CSV
+  const handleExportCSV = () => {
+    const savedExpenses: ExpenseItem[] = JSON.parse(localStorage.getItem('oncoin_expenses') || '[]')
+    const savedBills: Bill[] = JSON.parse(localStorage.getItem('oncoin_bills') || '[]')
+
+    let csvContent = 'data:text/csv;charset=utf-8,Tipo,Titulo,Valor,Categoria,Data_ou_Status\n'
+
+    savedExpenses.forEach((exp) => {
+      csvContent += `Gasto,${exp.title},${exp.amount},${exp.category},${exp.createdAt.split('T')[0]}\n`
+    })
+
+    savedBills.forEach((bill) => {
+      csvContent += `Fatura,${bill.title},${bill.amount},${bill.category},${bill.status}\n`
+    })
+
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `relatorio_oncoin_${username}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="min-h-screen bg-chico-dark text-chico-cream p-4 pb-12">
       {/* Header */}
@@ -65,33 +112,33 @@ export function UserProfile({ username = 'OliviaGaona', onBack }: UserProfilePro
         <section className="bg-gradient-to-br from-chico-cream/10 via-chico-dark to-chico-brown/20 border border-chico-gold/30 rounded-3xl p-6 relative overflow-hidden shadow-xl">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
             
-            {/* Foto de Perfil com Borda do Chico */}
             <div className="relative group">
-              <div className="w-28 h-28 rounded-full bg-chico-cream/10 border-2 border-chico-gold p-1 flex items-center justify-center overflow-hidden shadow-inner">
+              <div className="w-28 h-28 rounded-full bg-chico-cream/10 border-2 border-chico-gold p-1 flex items-center justify-center overflow-hidden shadow-inner animate-gold-glow">
                 <img
                   src={chicoImg}
                   alt="Avatar"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain animate-chico-float"
                 />
               </div>
-              <button
-                title="Alterar foto"
-                className="absolute bottom-0 right-0 bg-chico-gold text-chico-dark p-2 rounded-full text-xs font-bold shadow-md hover:bg-chico-brown cursor-pointer transition-transform group-hover:scale-110"
-              >
-                📷
-              </button>
             </div>
 
-            {/* Informações do Usuário */}
             <div className="flex-1 text-center sm:text-left space-y-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h2 className="text-2xl font-bold text-chico-gold">{username}</h2>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-chico-green bg-chico-green/20 px-3 py-1 rounded-full border border-chico-green/30 inline-self-center sm:inline-self-auto">
-                  Membro ONcoin
-                </span>
+                <div className="flex gap-2 justify-center sm:justify-start">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-chico-green bg-chico-green/20 px-3 py-1 rounded-full border border-chico-green/30">
+                    Membro ONcoin
+                  </span>
+                  <button
+                    onClick={handleExportCSV}
+                    className="text-[10px] uppercase font-bold tracking-wider text-chico-gold bg-chico-gold/10 hover:bg-chico-gold/20 px-3 py-1 rounded-full border border-chico-gold/40 cursor-pointer transition-all"
+                    title="Baixar relatórios de gastos em CSV"
+                  >
+                    📥 Exportar CSV
+                  </button>
+                </div>
               </div>
 
-              {/* Status / Frase Motivacional */}
               <div className="pt-1">
                 {isEditingBio ? (
                   <div className="flex items-center gap-2 mt-1">
@@ -144,12 +191,71 @@ export function UserProfile({ username = 'OliviaGaona', onBack }: UserProfilePro
               <span className="text-chico-green">{progressPercentage}% alcançado</span>
             </div>
             
-            {/* Barra de Progresso */}
             <div className="w-full bg-chico-dark/80 h-4 rounded-full border border-chico-gold/20 overflow-hidden p-0.5">
               <div
                 className="bg-gradient-to-r from-chico-brown via-chico-gold to-chico-green h-full rounded-full transition-all duration-500"
                 style={{ width: `${progressPercentage}%` }}
               />
+            </div>
+          </div>
+        </section>
+
+        {/* Simulador do Cofrinho Rendendo */}
+        <section className="bg-chico-cream/5 border border-chico-gold/20 rounded-3xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-chico-gold flex items-center gap-2">
+                <span>🐷</span> Simulador do Cofrinho Rendendo
+              </h3>
+              <p className="text-xs text-chico-sand">Veja quanto o seu dinheiro pode render guardando mensalmente</p>
+            </div>
+            <span className="text-xs bg-chico-green/20 text-chico-green border border-chico-green/30 px-2.5 py-1 rounded-full font-semibold">
+              Rendimento ~10.5% a.a.
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div className="space-y-4 bg-chico-dark/50 p-4 rounded-2xl border border-chico-gold/10">
+              <div>
+                <label className="block text-xs text-chico-sand mb-1">Aporte Mensal (R$)</label>
+                <input
+                  type="number"
+                  value={monthlyContribution}
+                  onChange={(e) => setMonthlyContribution(e.target.value)}
+                  placeholder="0"
+                  className="w-full px-3 py-2 rounded-xl bg-chico-cream/5 border border-chico-gold/20 text-xs text-chico-cream focus:outline-none focus:border-chico-gold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-chico-sand mb-1">Prazo em Meses ({simulationMonths} meses)</label>
+                <input
+                  type="range"
+                  min="1"
+                  max="36"
+                  value={simulationMonths}
+                  onChange={(e) => setSimulationMonths(Number(e.target.value))}
+                  className="w-full accent-chico-gold cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <div className="bg-chico-dark/80 p-4 rounded-2xl border border-chico-gold/20 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-chico-sand">
+                  <span>Total Investido:</span>
+                  <span className="font-bold text-chico-cream">R$ {totalInvested.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-chico-sand">
+                  <span>Rendimento Estimado:</span>
+                  <span className="font-bold text-chico-green">+ R$ {totalProfit.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-chico-gold/10 flex justify-between items-end">
+                <span className="text-xs uppercase font-semibold text-chico-sand">Valor Final Estimado:</span>
+                <span className="text-xl font-bold text-chico-gold">R$ {simulatedTotal.toFixed(2)}</span>
+              </div>
             </div>
           </div>
         </section>

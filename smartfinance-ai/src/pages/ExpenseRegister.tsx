@@ -6,10 +6,18 @@ interface ExpenseRegisterProps {
   onSave: () => void
 }
 
-type ExpenseType = 'comum' | 'meta' | 'desejo' | 'cofrinho' | 'limite'
+export interface ExpenseItem {
+  id: string
+  type: 'comum' | 'meta' | 'desejo' | 'cofrinho' | 'limite'
+  title: string
+  amount: number
+  category: string
+  period?: 'semanal' | 'mensal'
+  createdAt: string
+}
 
 export function ExpenseRegister({ onBack, onSave }: ExpenseRegisterProps) {
-  const [expenseType, setExpenseType] = useState<ExpenseType>('comum')
+  const [expenseType, setExpenseType] = useState<ExpenseItem['type']>('comum')
   const [title, setTitle] = useState('')
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('Mercado')
@@ -18,11 +26,28 @@ export function ExpenseRegister({ onBack, onSave }: ExpenseRegisterProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!title || !amount) return
+
+    const newExpense: ExpenseItem = {
+      id: Date.now().toString(),
+      type: expenseType,
+      title,
+      amount: parseFloat(amount),
+      category,
+      period: (expenseType === 'limite' || expenseType === 'meta') ? period : undefined,
+      createdAt: new Date().toISOString(),
+    }
+
+    // Carrega registros existentes, adiciona o novo e salva no localStorage
+    const savedExpenses: ExpenseItem[] = JSON.parse(localStorage.getItem('oncoin_expenses') || '[]')
+    const updatedExpenses = [newExpense, ...savedExpenses]
+    localStorage.setItem('oncoin_expenses', JSON.stringify(updatedExpenses))
+
     setSuccessMsg(true)
     setTimeout(() => {
       setSuccessMsg(false)
       onSave()
-    }, 1500)
+    }, 1200)
   }
 
   return (
@@ -63,7 +88,7 @@ export function ExpenseRegister({ onBack, onSave }: ExpenseRegisterProps) {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setExpenseType(item.id as ExpenseType)}
+                onClick={() => setExpenseType(item.id as ExpenseItem['type'])}
                 className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1 ${
                   expenseType === item.id
                     ? 'bg-chico-gold/20 border-chico-gold text-chico-cream font-bold shadow-md'
@@ -173,8 +198,8 @@ export function ExpenseRegister({ onBack, onSave }: ExpenseRegisterProps) {
 
             {/* Alerta de confirmação */}
             {successMsg && (
-              <div className="bg-chico-green/20 border border-chico-green text-chico-cream p-3 rounded-xl text-center text-xs font-bold animate-fade-in">
-                🐆 Chico registrou tudo com sucesso!
+              <div className="bg-chico-green/20 border border-chico-green text-chico-cream p-3 rounded-xl text-center text-xs font-bold">
+                🐆 Chico registrou e salvou com sucesso!
               </div>
             )}
 

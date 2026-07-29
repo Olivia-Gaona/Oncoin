@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import chicoImg from '../assets/Chico.png'
 
 interface BillsAndInvoicesProps {
   onBack: () => void
 }
 
-interface Bill {
+export interface Bill {
   id: string
   title: string
   amount: number
@@ -15,56 +15,63 @@ interface Bill {
   receiptName?: string
 }
 
+const defaultBills: Bill[] = [
+  {
+    id: '1',
+    title: 'Plano de Internet 500MB',
+    amount: 119.90,
+    dueDate: '2026-07-29',
+    category: 'Contas da Casa',
+    status: 'pending',
+  },
+  {
+    id: '2',
+    title: 'Mensalidade Faculdade',
+    amount: 450.00,
+    dueDate: '2026-08-05',
+    category: 'Estudos',
+    status: 'pending',
+  },
+  {
+    id: '3',
+    title: 'Assinatura Netflix & Spotify',
+    amount: 55.90,
+    dueDate: '2026-07-15',
+    category: 'Streaming',
+    status: 'paid',
+    receiptName: 'comprovante_july.pdf',
+  },
+  {
+    id: '4',
+    title: 'IPVA / Seguro Auto',
+    amount: 280.00,
+    dueDate: '2026-07-20',
+    category: 'Carro',
+    status: 'overdue',
+  },
+]
+
 export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
-  const [bills, setBills] = useState<Bill[]>([
-    {
-      id: '1',
-      title: 'Plano de Internet 500MB',
-      amount: 119.90,
-      dueDate: '2026-07-29',
-      category: 'Contas da Casa',
-      status: 'pending',
-    },
-    {
-      id: '2',
-      title: 'Mensalidade Faculdade',
-      amount: 450.00,
-      dueDate: '2026-08-05',
-      category: 'Estudos',
-      status: 'pending',
-    },
-    {
-      id: '3',
-      title: 'Assinatura Netflix & Spotify',
-      amount: 55.90,
-      dueDate: '2026-07-15',
-      category: 'Streaming',
-      status: 'paid',
-      receiptName: 'comprovante_july.pdf',
-    },
-    {
-      id: '4',
-      title: 'IPVA / Seguro Auto',
-      amount: 280.00,
-      dueDate: '2026-07-20',
-      category: 'Carro',
-      status: 'overdue',
-    },
-  ])
+  const [bills, setBills] = useState<Bill[]>(() => {
+    const saved = localStorage.getItem('oncoin_bills')
+    return saved ? JSON.parse(saved) : defaultBills
+  })
 
   const [filter, setFilter] = useState<'all' | 'pending' | 'paid' | 'overdue'>('all')
   const [showAddModal, setShowAddModal] = useState(false)
   
-  // Campos do formulário de nova conta
   const [newTitle, setNewTitle] = useState('')
   const [newAmount, setNewAmount] = useState('')
   const [newDueDate, setNewDueDate] = useState('')
   const [newCategory, setNewCategory] = useState<Bill['category']>('Contas da Casa')
 
-  // Marcar como pago e anexar comprovante
+  useEffect(() => {
+    localStorage.setItem('oncoin_bills', JSON.stringify(bills))
+  }, [bills])
+
   const handleMarkAsPaid = (id: string) => {
-    setBills(
-      bills.map((bill) =>
+    setBills((prev) =>
+      prev.map((bill) =>
         bill.id === id
           ? { ...bill, status: 'paid', receiptName: `comprovante_${Date.now().toString().slice(-4)}.pdf` }
           : bill
@@ -72,7 +79,6 @@ export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
     )
   }
 
-  // Adicionar nova conta
   const handleAddBill = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newTitle || !newAmount || !newDueDate) return
@@ -86,7 +92,7 @@ export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
       status: 'pending',
     }
 
-    setBills([...bills, newBill])
+    setBills((prev) => [newBill, ...prev])
     setShowAddModal(false)
     setNewTitle('')
     setNewAmount('')
@@ -108,7 +114,6 @@ export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
 
   return (
     <div className="min-h-screen bg-chico-dark text-chico-cream p-4 pb-12">
-      {/* Header */}
       <div className="max-w-4xl mx-auto flex items-center justify-between py-4 border-b border-chico-gold/20">
         <button
           onClick={onBack}
@@ -123,8 +128,6 @@ export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
       </div>
 
       <main className="max-w-4xl mx-auto mt-6 space-y-6">
-        
-        {/* Cabeçalho */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-chico-gold">Contas & Faturas 📄</h2>
@@ -141,7 +144,6 @@ export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
           </button>
         </div>
 
-        {/* Filtros de Status */}
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           {[
             { id: 'all', label: 'Todas as Contas' },
@@ -163,7 +165,6 @@ export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
           ))}
         </div>
 
-        {/* Lista de Faturas */}
         <div className="space-y-3">
           {filteredBills.length === 0 ? (
             <div className="bg-chico-cream/5 border border-chico-gold/20 rounded-2xl p-8 text-center text-chico-slate text-xs">
@@ -198,7 +199,6 @@ export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
                       R$ {bill.amount.toFixed(2)}
                     </p>
 
-                    {/* Status Badge */}
                     {bill.status === 'paid' && (
                       <span className="text-[10px] font-bold text-chico-green bg-chico-green/20 px-2 py-0.5 rounded-md">
                         Pago
@@ -216,7 +216,6 @@ export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
                     )}
                   </div>
 
-                  {/* Ação */}
                   {bill.status !== 'paid' ? (
                     <button
                       onClick={() => handleMarkAsPaid(bill.id)}
@@ -238,7 +237,6 @@ export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
           )}
         </div>
 
-        {/* Modal de Cadastrar Nova Fatura */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-chico-dark border border-chico-gold/40 rounded-2xl p-6 w-full max-w-md space-y-4">
@@ -316,7 +314,6 @@ export function BillsAndInvoices({ onBack }: BillsAndInvoicesProps) {
             </div>
           </div>
         )}
-
       </main>
     </div>
   )
