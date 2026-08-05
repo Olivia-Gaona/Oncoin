@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
@@ -6,74 +6,73 @@ import { ExpenseRegister } from './pages/ExpenseRegister'
 import { ShoppingLists } from './pages/ShoppingLists'
 import { BillsAndInvoices } from './pages/BillsAndInvoices'
 import { UserProfile } from './pages/UserProfile'
+import { TransactionsHistory } from './pages/TransactionsHistory'
 
 export function App() {
   const [currentPage, setCurrentPage] = useState<
-    'login' | 'register' | 'home' | 'new-expense' | 'shopping-lists' | 'bills' | 'profile'
+    'login' | 'register' | 'home' | 'new-expense' | 'shopping-lists' | 'bills' | 'profile' | 'history'
   >('login')
   const [loggedUser] = useState('OliviaGaona')
 
+  // Aplica o tema salvo no localStorage na inicialização global do App
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('oncoin_app_theme') || 'classic'
+    document.documentElement.setAttribute('data-theme', savedTheme)
+    document.body.setAttribute('data-theme', savedTheme)
+  }, [])
+
   return (
-    <div className="min-h-screen bg-chico-dark font-sans selection:bg-chico-gold selection:text-chico-dark">
+    <div className="min-h-screen bg-chico-dark font-sans selection:bg-chico-gold selection:text-chico-dark transition-colors duration-300">
       {currentPage === 'login' && (
-        <div key="login" className="animate-page-entry">
-          <Login
-            onNavigateToRegister={() => setCurrentPage('register')}
-            onLoginSuccess={() => setCurrentPage('home')}
-          />
-        </div>
+        <Login
+          onNavigateToRegister={() => setCurrentPage('register')}
+          onLoginSuccess={() => setCurrentPage('home')}
+        />
       )}
 
       {currentPage === 'register' && (
-        <div key="register" className="animate-page-entry">
-          <Register
-            onNavigateToLogin={() => setCurrentPage('login')}
-            onRegisterSuccess={() => setCurrentPage('home')}
-          />
-        </div>
+        <Register
+          onNavigateToLogin={() => setCurrentPage('login')}
+          onRegisterSuccess={() => setCurrentPage('home')}
+        />
       )}
 
       {currentPage === 'home' && (
-        <div key="home" className="animate-page-entry">
-          <Dashboard
-            username={loggedUser}
-            onLogout={() => setCurrentPage('login')}
-            onNewExpense={() => setCurrentPage('new-expense')}
-            onShoppingLists={() => setCurrentPage('shopping-lists')}
-            onBillsAndInvoices={() => setCurrentPage('bills')}
-            onProfile={() => setCurrentPage('profile')}
-          />
-        </div>
+        <Dashboard
+          username={loggedUser}
+          onLogout={() => setCurrentPage('login')}
+          onNewExpense={() => setCurrentPage('new-expense')}
+          onShoppingLists={() => setCurrentPage('shopping-lists')}
+          onBillsAndInvoices={() => setCurrentPage('bills')}
+          onProfile={() => setCurrentPage('profile')}
+          onHistory={() => setCurrentPage('history')}
+        />
       )}
 
       {currentPage === 'new-expense' && (
-        <div key="new-expense" className="animate-page-entry">
-          <ExpenseRegister
-            onBack={() => setCurrentPage('home')}
-            onSave={() => setCurrentPage('home')}
-          />
-        </div>
+        <ExpenseRegister
+          onBack={() => setCurrentPage('home')}
+          onSave={() => setCurrentPage('home')}
+        />
       )}
 
       {currentPage === 'shopping-lists' && (
-        <div key="shopping-lists" className="animate-page-entry">
-          <ShoppingLists onBack={() => setCurrentPage('home')} />
-        </div>
+        <ShoppingLists onBack={() => setCurrentPage('home')} />
       )}
 
       {currentPage === 'bills' && (
-        <div key="bills" className="animate-page-entry">
-          <BillsAndInvoices onBack={() => setCurrentPage('home')} />
-        </div>
+        <BillsAndInvoices onBack={() => setCurrentPage('home')} />
       )}
 
       {currentPage === 'profile' && (
-        <div key="profile" className="animate-page-entry">
-          <UserProfile
-            username={loggedUser}
-            onBack={() => setCurrentPage('home')}
-          />
-        </div>
+        <UserProfile
+          username={loggedUser}
+          onBack={() => setCurrentPage('home')}
+        />
+      )}
+
+      {currentPage === 'history' && (
+        <TransactionsHistory onBack={() => setCurrentPage('home')} />
       )}
     </div>
   )

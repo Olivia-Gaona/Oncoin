@@ -1,78 +1,66 @@
 @import "tailwindcss";
 
-@theme {
-  --color-chico-dark: #372113;
-  --color-chico-gold: #bd9f4a;
-  --color-chico-cream: #e7e0c7;
-  --color-chico-sand: #d4bda9;
-  --color-chico-olive: #4a4920;
-  --color-chico-green: #a0ad68;
-  --color-chico-brown: #7e6236;
-  --color-chico-taupe: #958164;
-  --color-chico-gray: #a69c99;
-  --color-chico-slate: #918d85;
-}
-
 :root {
   --chico-dark: #372113;
   --chico-gold: #bd9f4a;
   --chico-cream: #e7e0c7;
   --chico-sand: #d4bda9;
+  --chico-brown: #7e6236;
   --chico-olive: #4a4920;
   --chico-green: #a0ad68;
-  --chico-brown: #7e6236;
-  --chico-taupe: #958164;
-  --chico-gray: #a69c99;
-  --chico-slate: #918d85;
 }
+
+/* 🪻 Paleta 1: Lavender & Amethyst */
+[data-theme='lavender'] {
+  --chico-dark: #2a2038 !important;
+  --chico-gold: #a892bf !important;
+  --chico-cream: #fdf1e2 !important;
+  --chico-sand: #655a7c !important;
+  --chico-brown: #523e66 !important;
+  --chico-olive: #433357 !important;
+  --chico-green: #b5a3cb !important;
+}
+
+/* 🍒 Paleta 2: Cherry & Sangria */
+[data-theme='cherry'] {
+  --chico-dark: #3d0806 !important;
+  --chico-gold: #95bbea !important;
+  --chico-cream: #fff8e7 !important;
+  --chico-sand: #d66864 !important;
+  --chico-brown: #930500 !important;
+  --chico-olive: #6b0400 !important;
+  --chico-green: #95bbea !important;
+}
+
+/* 🌊 Paleta 3: Ocean Blue Jay */
+[data-theme='ocean'] {
+  --chico-dark: #1b2636 !important;
+  --chico-gold: #a0adc2 !important;
+  --chico-cream: #dcdee8 !important;
+  --chico-sand: #5b7399 !important;
+  --chico-brown: #394e6e !important;
+  --chico-olive: #293952 !important;
+  --chico-green: #8da1c4 !important;
+}
+
+/* Força os elementos do Tailwind a usarem as variáveis dinâmicas */
+.bg-chico-dark { background-color: var(--chico-dark) !important; }
+.bg-chico-gold { background-color: var(--chico-gold) !important; }
+.bg-chico-cream { background-color: var(--chico-cream) !important; }
+.bg-chico-sand { background-color: var(--chico-sand) !important; }
+.bg-chico-brown { background-color: var(--chico-brown) !important; }
+
+.text-chico-gold { color: var(--chico-gold) !important; }
+.text-chico-cream { color: var(--chico-cream) !important; }
+.text-chico-sand { color: var(--chico-sand) !important; }
+.text-chico-green { color: var(--chico-green) !important; }
+
+.border-chico-gold { border-color: var(--chico-gold) !important; }
+.border-chico-gold\/20 { border-color: rgba(189, 159, 74, 0.2) !important; }
+.border-chico-gold\/30 { border-color: rgba(189, 159, 74, 0.3) !important; }
 
 body {
-  background-color: var(--chico-dark);
-  color: var(--chico-cream);
-  font-family: system-ui, -apple-system, sans-serif;
-  overflow-x: hidden;
-}
-
-/* Animação suave para a entrada de telas */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-page-entry {
-  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Animação de flutuação suave do Chico */
-@keyframes floatChico {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-5px) rotate(1.5deg);
-  }
-}
-
-.animate-chico-float {
-  animation: floatChico 3.5s ease-in-out infinite;
-}
-
-/* Efeito de brilho contínuo no ícone do Chico */
-@keyframes goldGlow {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(189, 159, 74, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 22px rgba(189, 159, 74, 0.5);
-  }
-}
-
-.animate-gold-glow {
-  animation: goldGlow 3s ease-in-out infinite;
+  background-color: var(--chico-dark) !important;
+  color: var(--chico-cream) !important;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }

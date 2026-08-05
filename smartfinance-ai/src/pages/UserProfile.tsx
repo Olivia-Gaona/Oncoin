@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import chicoImg from '../assets/Chico.png'
+import chicoEngineerImg from '../assets/Chico_Engenheiro.png'
+import chicoStudentImg from '../assets/Chico_Univesitário.png'
+import chicoEntrepreneurImg from '../assets/Chico_Empresário.png'
 import type { ExpenseItem } from './ExpenseRegister'
 import type { Bill } from './BillsAndInvoices'
 
@@ -11,13 +14,49 @@ interface UserProfileProps {
 export function UserProfile({ username = 'OliviaGaona', onBack }: UserProfileProps) {
   const [bio, setBio] = useState('tentando meu melhor 🐆✨')
   const [isEditingBio, setIsEditingBio] = useState(false)
+  
+  // Controle de visibilidade da seção de personalização
+  const [showCustomize, setShowCustomize] = useState(false)
 
-  // Estados do Simulador de Investimentos (Usando string no input)
+  // Mapeamento de Avatares com os arquivos salvos
+  const avatars = [
+    { id: 'classic', label: 'Chico Clássico', img: chicoImg, badge: '🐆' },
+    { id: 'engineer', label: 'Chico Engenheiro', img: chicoEngineerImg, badge: '👷‍♂️' },
+    { id: 'student', label: 'Chico Universitário', img: chicoStudentImg, badge: '🎓' },
+    { id: 'entrepreneur', label: 'Chico Empresário', img: chicoEntrepreneurImg, badge: '💼' },
+  ]
+
+  const [selectedAvatarId, setSelectedAvatarId] = useState<string>(() => {
+    return localStorage.getItem('oncoin_user_avatar') || 'classic'
+  })
+
+  // Paletas de Cores especificadas
+  const themes = [
+    { id: 'classic', label: '🐆 Standard Brown', desc: 'Original ONcoin' },
+    { id: 'lavender', label: '🪻 Lavender & Amethyst', desc: 'Dolphin / Amethyst' },
+    { id: 'cherry', label: '🍒 Cherry & Sangria', desc: 'Sangria / Cosmic' },
+    { id: 'ocean', label: '🌊 Ocean Blue Jay', desc: 'Blue Jay / Gull Grey' },
+  ]
+
+  const [activeTheme, setActiveTheme] = useState<string>(() => {
+    return localStorage.getItem('oncoin_app_theme') || 'classic'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('oncoin_user_avatar', selectedAvatarId)
+  }, [selectedAvatarId])
+
+useEffect(() => {
+    localStorage.setItem('oncoin_app_theme', activeTheme)
+    document.body.setAttribute('data-theme', activeTheme)
+    document.documentElement.setAttribute('data-theme', activeTheme)
+  }, [activeTheme])
+
+  // Estados do Simulador de Investimentos
   const [monthlyContribution, setMonthlyContribution] = useState<string>('300')
   const [simulationMonths, setSimulationMonths] = useState<number>(12)
   const [cdiRate] = useState<number>(0.105)
 
-  // Conversão para número
   const numContribution = parseFloat(monthlyContribution) || 0
 
   const calculateInvestment = () => {
@@ -33,40 +72,63 @@ export function UserProfile({ username = 'OliviaGaona', onBack }: UserProfilePro
   const totalInvested = numContribution * simulationMonths
   const totalProfit = simulatedTotal - totalInvested
 
-  // Metas de Economia
   const [savedAmount] = useState(3500.0)
   const [targetAmount] = useState(5000.0)
   const progressPercentage = Math.min(Math.round((savedAmount / targetAmount) * 100), 100)
 
-  // Recados do Chico
-  const [alerts] = useState([
-    {
-      id: '1',
-      type: 'warning',
-      icon: '⚠️',
-      title: 'Atenção aos gastos com Mercado',
-      desc: 'Você atingiu 85% do limite definido para esta categoria este mês.',
-      date: 'Hoje',
-    },
-    {
-      id: '2',
-      type: 'success',
-      icon: '🎉',
-      title: 'Meta de Economia da Semana!',
-      desc: 'Parabéns! Você guardou R$ 150,00 no cofrinho da Viagem.',
-      date: 'Ontem',
-    },
-    {
-      id: '3',
-      type: 'info',
-      icon: '📄',
-      title: 'Conta prestes a vencer',
-      desc: 'Sua fatura de Internet vence em breve. Não se esqueça de anexar o comprovante!',
-      date: '2 dias atrás',
-    },
-  ])
+  // Alertas Dinâmicos baseados no localStorage
+  const [alerts, setAlerts] = useState<Array<{ id: string; icon: string; title: string; desc: string; date: string }>>([])
 
-  // Função para exportar os dados em CSV
+  useEffect(() => {
+    const savedExpenses: ExpenseItem[] = JSON.parse(localStorage.getItem('oncoin_expenses') || '[]')
+    const savedBills: Bill[] = JSON.parse(localStorage.getItem('oncoin_bills') || '[]')
+
+    const generatedAlerts = []
+
+    const totalContas = savedExpenses
+      .filter((e) => e.category === 'Contas')
+      .reduce((sum, e) => sum + e.amount, 0)
+
+    if (totalContas > 200) {
+      generatedAlerts.push({
+        id: '1',
+        icon: '⚠️',
+        title: 'Atenção às Contas da Casa',
+        desc: `Você acumulou R$ ${totalContas.toFixed(2)} em contas. Fique atento aos limites!`,
+        date: 'Hoje',
+      })
+    } else {
+      generatedAlerts.push({
+        id: '1',
+        icon: '🎉',
+        title: 'Gastos sob controle!',
+        desc: 'Suas categorias de consumo continuam dentro da meta semanal recomendada pelo Chico.',
+        date: 'Hoje',
+      })
+    }
+
+    const pendingCount = savedBills.filter((b) => b.status === 'pending' || b.status === 'overdue').length
+    if (pendingCount > 0) {
+      generatedAlerts.push({
+        id: '2',
+        icon: '📄',
+        title: `${pendingCount} Fatura(s) pendente(s)`,
+        desc: 'Não se esqueça de pagar e anexar os comprovantes para evitar juros.',
+        date: 'Recente',
+      })
+    } else {
+      generatedAlerts.push({
+        id: '2',
+        icon: '✅',
+        title: 'Faturas em dia!',
+        desc: 'Nenhum boleto pendente ou atrasado detectado pelo Chico.',
+        date: 'Recente',
+      })
+    }
+
+    setAlerts(generatedAlerts)
+  }, [])
+
   const handleExportCSV = () => {
     const savedExpenses: ExpenseItem[] = JSON.parse(localStorage.getItem('oncoin_expenses') || '[]')
     const savedBills: Bill[] = JSON.parse(localStorage.getItem('oncoin_bills') || '[]')
@@ -90,8 +152,10 @@ export function UserProfile({ username = 'OliviaGaona', onBack }: UserProfilePro
     document.body.removeChild(link)
   }
 
+  const currentAvatar = avatars.find((a) => a.id === selectedAvatarId) || avatars[0]
+
   return (
-    <div className="min-h-screen bg-chico-dark text-chico-cream p-4 pb-12">
+    <div className="min-h-screen bg-chico-dark text-chico-cream p-4 pb-12 transition-colors duration-300">
       {/* Header */}
       <div className="max-w-4xl mx-auto flex items-center justify-between py-4 border-b border-chico-gold/20">
         <button
@@ -112,23 +176,38 @@ export function UserProfile({ username = 'OliviaGaona', onBack }: UserProfilePro
         <section className="bg-gradient-to-br from-chico-cream/10 via-chico-dark to-chico-brown/20 border border-chico-gold/30 rounded-3xl p-6 relative overflow-hidden shadow-xl">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
             
+            {/* Exibição da Imagem PNG do Avatar */}
             <div className="relative group">
-              <div className="w-28 h-28 rounded-full bg-chico-cream/10 border-2 border-chico-gold p-1 flex items-center justify-center overflow-hidden shadow-inner animate-gold-glow">
+              <div className="w-28 h-28 rounded-full bg-chico-cream/10 border-2 border-chico-gold p-1 flex items-center justify-center overflow-hidden shadow-inner animate-gold-glow relative">
                 <img
-                  src={chicoImg}
-                  alt="Avatar"
+                  src={currentAvatar.img}
+                  alt={currentAvatar.label}
                   className="w-full h-full object-contain animate-chico-float"
                 />
               </div>
             </div>
 
+            {/* Informações do Usuário */}
             <div className="flex-1 text-center sm:text-left space-y-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <h2 className="text-2xl font-bold text-chico-gold">{username}</h2>
-                <div className="flex gap-2 justify-center sm:justify-start">
+                <h2 className="text-2xl font-bold text-chico-gold flex items-center justify-center sm:justify-start gap-2">
+                  <span>{username}</span>
+                  <span className="text-lg">{currentAvatar.badge}</span>
+                </h2>
+                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                   <span className="text-[10px] uppercase font-bold tracking-widest text-chico-green bg-chico-green/20 px-3 py-1 rounded-full border border-chico-green/30">
                     Membro ONcoin
                   </span>
+
+                  {/* Botão de Alternar Personalização de Perfil */}
+                  <button
+                    onClick={() => setShowCustomize(!showCustomize)}
+                    className="text-[10px] uppercase font-bold tracking-wider text-chico-cream bg-chico-gold/20 hover:bg-chico-gold/30 px-3 py-1 rounded-full border border-chico-gold/50 cursor-pointer transition-all flex items-center gap-1"
+                  >
+                    <span>🎨</span>
+                    <span>{showCustomize ? 'Ocultar Personalização' : 'Personalizar Perfil'}</span>
+                  </button>
+
                   <button
                     onClick={handleExportCSV}
                     className="text-[10px] uppercase font-bold tracking-wider text-chico-gold bg-chico-gold/10 hover:bg-chico-gold/20 px-3 py-1 rounded-full border border-chico-gold/40 cursor-pointer transition-all"
@@ -171,6 +250,78 @@ export function UserProfile({ username = 'OliviaGaona', onBack }: UserProfilePro
 
           </div>
         </section>
+
+        {/* SEÇÃO EXPANSÍVEL: Personalização de Avatares & Temas */}
+        {showCustomize && (
+          <section className="bg-chico-cream/5 border border-chico-gold/30 rounded-3xl p-6 space-y-4 animate-page-entry shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-chico-gold flex items-center gap-2">
+                  <span>🎨</span> Personalização de Avatares & Temas
+                </h3>
+                <p className="text-xs text-chico-sand">Escolha a versão do Chico que melhor te representa e troque a paleta de cores</p>
+              </div>
+              <button
+                onClick={() => setShowCustomize(false)}
+                className="text-xs text-chico-sand hover:text-chico-gold border border-chico-gold/20 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+              >
+                ✕ Fechar
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              
+              {/* Seletor de Avatares PNG */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-chico-sand uppercase tracking-wider">
+                  Avatares do Chico
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {avatars.map((a) => (
+                    <button
+                      key={a.id}
+                      onClick={() => setSelectedAvatarId(a.id)}
+                      className={`p-2 rounded-2xl border flex items-center gap-2 text-xs font-medium transition-all cursor-pointer ${
+                        selectedAvatarId === a.id
+                          ? 'bg-chico-gold/20 border-chico-gold text-chico-cream font-bold shadow-md'
+                          : 'bg-chico-dark/60 border-chico-gold/10 text-chico-slate hover:border-chico-gold/30'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-chico-cream/10 p-0.5 border border-chico-gold/30 flex items-center justify-center overflow-hidden shrink-0">
+                        <img src={a.img} alt={a.label} className="w-full h-full object-contain" />
+                      </div>
+                      <span className="truncate">{a.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Paletas de Cores */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-chico-sand uppercase tracking-wider">
+                  Paletas de Cores
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {themes.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setActiveTheme(t.id)}
+                      className={`p-2.5 rounded-2xl border flex flex-col items-start gap-0.5 text-xs font-medium transition-all cursor-pointer ${
+                        activeTheme === t.id
+                          ? 'bg-chico-gold/20 border-chico-gold text-chico-cream font-bold shadow-md'
+                          : 'bg-chico-dark/60 border-chico-gold/10 text-chico-slate hover:border-chico-gold/30'
+                      }`}
+                    >
+                      <span className="text-xs truncate">{t.label}</span>
+                      <span className="text-[9px] text-chico-sand">{t.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </section>
+        )}
 
         {/* Progresso de Economia */}
         <section className="bg-chico-cream/5 border border-chico-gold/20 rounded-3xl p-6 space-y-4">
