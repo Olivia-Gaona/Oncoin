@@ -48,7 +48,7 @@ export function App() {
       {currentPage === 'register' && (
         <Register
           onNavigateToLogin={() => setCurrentPage('login')}
-          onRegisterSuccess={handleRegisterSuccess}
+          onRegisterSuccess={(newName: string) => handleRegisterSuccess(newName)}
         />
       )}
 
