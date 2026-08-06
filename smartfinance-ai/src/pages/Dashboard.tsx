@@ -36,9 +36,9 @@ export function Dashboard({
     { symbol: 'PETR4', name: 'Petrobras PN', price: 'R$ 37,80', change: '+1.1%' },
   ])
 
-  const [weeklyExpenseTotal, setWeeklyExpenseTotal] = useState(289.9)
-  const [pendingBillsTotal, setPendingBillsTotal] = useState(210.0)
-  const [topCategory, setTopCategory] = useState('Contas')
+  const [weeklyExpenseTotal, setWeeklyExpenseTotal] = useState(0)
+  const [pendingBillsTotal, setPendingBillsTotal] = useState(0)
+  const [topCategory, setTopCategory] = useState('Nenhuma')
   const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([])
 
   const categoryPalette: Record<string, { icon: string; color: string }> = {
@@ -51,44 +51,39 @@ export function Dashboard({
     Outros: { icon: '💸', color: '#918d85' },
   }
 
+  // Histórico Semanal estático apenas para visualização estética
   const weeklyHistory = [
-    { day: 'Seg', amount: 45.0 },
-    { day: 'Ter', amount: 120.0 },
-    { day: 'Qua', amount: 30.0 },
-    { day: 'Qui', amount: 85.0 },
-    { day: 'Sex', amount: 15.0 },
-    { day: 'Sáb', amount: 90.0 },
-    { day: 'Dom', amount: 68.5 },
+    { day: 'Seg', amount: 0 },
+    { day: 'Ter', amount: 0 },
+    { day: 'Qua', amount: 0 },
+    { day: 'Qui', amount: 0 },
+    { day: 'Sex', amount: 0 },
+    { day: 'Sáb', amount: 0 },
+    { day: 'Dom', amount: 0 },
   ]
-  const maxWeeklyAmount = Math.max(...weeklyHistory.map((h) => h.amount), 1)
+  const maxWeeklyAmount = 100
 
   useEffect(() => {
+    // Busca os gastos reais salvos pelo usuário (sem recarregar padrões se estiver vazio)
     const savedExpenses: ExpenseItem[] = JSON.parse(localStorage.getItem('oncoin_expenses') || '[]')
     
-    const defaultExpenses: ExpenseItem[] = [
-      { id: '1', type: 'comum', title: 'Conta de Luz', amount: 250.0, category: 'Contas', createdAt: new Date().toISOString() },
-      { id: '2', type: 'comum', title: 'Assinatura', amount: 39.9, category: 'Streaming', createdAt: new Date().toISOString() },
-    ]
-
-    const listToAnalyze = savedExpenses.length > 0 ? savedExpenses : defaultExpenses
-
-    const totalExpenses = listToAnalyze
+    const totalExpenses = savedExpenses
       .filter((item) => item.type === 'comum')
       .reduce((sum, item) => sum + item.amount, 0)
 
     setWeeklyExpenseTotal(totalExpenses)
 
     const categoriesMap: Record<string, number> = {}
-    listToAnalyze
+    savedExpenses
       .filter((item) => item.type === 'comum')
       .forEach((item) => {
         categoriesMap[item.category] = (categoriesMap[item.category] || 0) + item.amount
       })
 
-    const highestCategory = Object.keys(categoriesMap).reduce(
-      (a, b) => (categoriesMap[a] > categoriesMap[b] ? a : b),
-      'Contas'
-    )
+    const highestCategory = Object.keys(categoriesMap).length > 0
+      ? Object.keys(categoriesMap).reduce((a, b) => (categoriesMap[a] > categoriesMap[b] ? a : b))
+      : 'Nenhuma'
+
     setTopCategory(highestCategory)
 
     const breakdown: CategoryBreakdown[] = Object.keys(categoriesMap).map((cat) => ({
@@ -102,12 +97,11 @@ export function Dashboard({
     setCategoryBreakdown(breakdown)
 
     const savedBills: Bill[] = JSON.parse(localStorage.getItem('oncoin_bills') || '[]')
-    if (savedBills.length > 0) {
-      const pendingTotal = savedBills
-        .filter((bill) => bill.status === 'pending' || bill.status === 'overdue')
-        .reduce((sum, bill) => sum + bill.amount, 0)
-      setPendingBillsTotal(pendingTotal)
-    }
+    const pendingTotal = savedBills
+      .filter((bill) => bill.status === 'pending' || bill.status === 'overdue')
+      .reduce((sum, bill) => sum + bill.amount, 0)
+
+    setPendingBillsTotal(pendingTotal)
   }, [])
 
   let accumulatedAngle = 0
@@ -149,7 +143,7 @@ export function Dashboard({
       <main className="max-w-5xl mx-auto px-4 mt-6 space-y-6">
         
         {/* Banner de Boas-Vindas com o Chico */}
-        <section className="bg-gradient-to-r from-chico-olive/30 via-chico-dark to-chico-brown/20 border border-chico-gold/30 rounded-3xl p-6 relative overflow-hidden shadow-xl">
+        <section className="bg-linear-to-r from-chico-olive/30 via-chico-dark to-chico-brown/20 border border-chico-gold/30 rounded-3xl p-6 relative overflow-hidden shadow-xl">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
             <div>
               <span className="text-xs uppercase tracking-widest text-chico-gold font-semibold">Resumo do Dia</span>
@@ -164,7 +158,7 @@ export function Dashboard({
             <div className="bg-chico-cream/10 border border-chico-gold/30 rounded-2xl p-4 flex items-center gap-4 min-w-[220px]">
               <div>
                 <p className="text-xs text-chico-sand uppercase tracking-wider">Saldo Total</p>
-                <p className="text-2xl font-bold text-chico-gold">R$ 4.250,80</p>
+                <p className="text-2xl font-bold text-chico-gold">R$ 0,00</p>
               </div>
             </div>
           </div>
@@ -233,47 +227,57 @@ export function Dashboard({
             <div className="flex flex-col sm:flex-row items-center justify-around gap-6 py-2">
               <div className="relative w-40 h-40 flex items-center justify-center">
                 <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
-                  {categoryBreakdown.map((item, index) => {
-                    const strokeDasharray = `${item.percentage} ${100 - item.percentage}`
-                    const strokeDashoffset = -accumulatedAngle
-                    accumulatedAngle += item.percentage
-                    return (
-                      <circle
-                        key={index}
-                        cx="18"
-                        cy="18"
-                        r="15.91549430918954"
-                        fill="transparent"
-                        stroke={item.color}
-                        strokeWidth="3.8"
-                        strokeDasharray={strokeDasharray}
-                        strokeDashoffset={strokeDashoffset}
-                        className="transition-all duration-700 hover:opacity-80"
-                      />
-                    )
-                  })}
+                  {categoryBreakdown.length === 0 ? (
+                    <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="3.8" />
+                  ) : (
+                    categoryBreakdown.map((item, index) => {
+                      const strokeDasharray = `${item.percentage} ${100 - item.percentage}`
+                      const strokeDashoffset = -accumulatedAngle
+                      accumulatedAngle += item.percentage
+                      return (
+                        <circle
+                          key={index}
+                          cx="18"
+                          cy="18"
+                          r="15.91549430918954"
+                          fill="transparent"
+                          stroke={item.color}
+                          strokeWidth="3.8"
+                          strokeDasharray={strokeDasharray}
+                          strokeDashoffset={strokeDashoffset}
+                          className="transition-all duration-700 hover:opacity-80"
+                        />
+                      )
+                    })
+                  )}
                 </svg>
                 <div className="absolute text-center">
                   <span className="block text-[10px] text-chico-sand uppercase tracking-wider">Total</span>
-                  <span className="text-sm font-bold text-chico-gold">100%</span>
+                  <span className="text-sm font-bold text-chico-gold">
+                    {categoryBreakdown.length > 0 ? '100%' : '0%'}
+                  </span>
                 </div>
               </div>
 
               <div className="space-y-2 w-full sm:w-auto">
-                {categoryBreakdown.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between gap-4 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-3 h-3 rounded-full inline-block"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-chico-cream font-medium">
-                        {item.icon} {item.category}
-                      </span>
+                {categoryBreakdown.length === 0 ? (
+                  <p className="text-xs text-chico-slate">Nenhum gasto cadastrado.</p>
+                ) : (
+                  categoryBreakdown.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between gap-4 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-3 h-3 rounded-full inline-block"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="text-chico-cream font-medium">
+                          {item.icon} {item.category}
+                        </span>
+                      </div>
+                      <span className="font-bold text-chico-gold">{item.percentage}%</span>
                     </div>
-                    <span className="font-bold text-chico-gold">{item.percentage}%</span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -318,8 +322,7 @@ export function Dashboard({
             </div>
 
             <div className="flex justify-between items-center text-[11px] text-chico-slate">
-              <span>Dia com menor gasto: <strong className="text-chico-green">Sexta (R$15.00)</strong></span>
-              <span>Dia pico: <strong className="text-chico-gold">Terça (R$120.00)</strong></span>
+              <span>Status: <strong className="text-chico-green">Pronto para novo teste</strong></span>
             </div>
           </div>
 

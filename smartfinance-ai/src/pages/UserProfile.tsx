@@ -46,7 +46,7 @@ export function UserProfile({ username = 'OliviaGaona', onBack }: UserProfilePro
     localStorage.setItem('oncoin_user_avatar', selectedAvatarId)
   }, [selectedAvatarId])
 
-useEffect(() => {
+  useEffect(() => {
     localStorage.setItem('oncoin_app_theme', activeTheme)
     document.body.setAttribute('data-theme', activeTheme)
     document.documentElement.setAttribute('data-theme', activeTheme)
@@ -152,6 +152,16 @@ useEffect(() => {
     document.body.removeChild(link)
   }
 
+  // Função para resetar todos os dados do localStorage (Ideal para testes presenciais)
+  const handleResetApp = () => {
+    if (window.confirm('Deseja realmente apagar todos os dados para iniciar um novo teste do zero?')) {
+      localStorage.removeItem('oncoin_expenses')
+      localStorage.removeItem('oncoin_bills')
+      localStorage.removeItem('oncoin_shopping_lists')
+      window.location.reload()
+    }
+  }
+
   const currentAvatar = avatars.find((a) => a.id === selectedAvatarId) || avatars[0]
 
   return (
@@ -173,7 +183,7 @@ useEffect(() => {
       <main className="max-w-4xl mx-auto mt-6 space-y-6">
         
         {/* Card do Perfil */}
-        <section className="bg-gradient-to-br from-chico-cream/10 via-chico-dark to-chico-brown/20 border border-chico-gold/30 rounded-3xl p-6 relative overflow-hidden shadow-xl">
+        <section className="bg-linear-to-br from-chico-cream/10 via-chico-dark to-chico-brown/20 border border-chico-gold/30 rounded-3xl p-6 relative overflow-hidden shadow-xl">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
             
             {/* Exibição da Imagem PNG do Avatar */}
@@ -214,6 +224,15 @@ useEffect(() => {
                     title="Baixar relatórios de gastos em CSV"
                   >
                     📥 Exportar CSV
+                  </button>
+
+                  {/* Botão de Reset Completo para Testes Presenciais */}
+                  <button
+                    onClick={handleResetApp}
+                    className="text-[10px] uppercase font-bold tracking-wider text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1 rounded-full border border-red-500/30 cursor-pointer transition-all"
+                    title="Apaga os dados salvos para iniciar um teste do zero"
+                  >
+                    🧹 Resetar App
                   </button>
                 </div>
               </div>
@@ -344,7 +363,7 @@ useEffect(() => {
             
             <div className="w-full bg-chico-dark/80 h-4 rounded-full border border-chico-gold/20 overflow-hidden p-0.5">
               <div
-                className="bg-gradient-to-r from-chico-brown via-chico-gold to-chico-green h-full rounded-full transition-all duration-500"
+                className="bg-linear-to-r from-chico-brown via-chico-gold to-chico-green h-full rounded-full transition-all duration-500"
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
