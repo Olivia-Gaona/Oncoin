@@ -12,28 +12,45 @@ export function App() {
   const [currentPage, setCurrentPage] = useState<
     'login' | 'register' | 'home' | 'new-expense' | 'shopping-lists' | 'bills' | 'profile' | 'history'
   >('login')
-  const [loggedUser] = useState('OliviaGaona')
 
-  // Aplica o tema salvo no localStorage na inicialização global do App
+  // Nome do usuário conectado (carrega do localStorage ou assume padrão)
+  const [loggedUser, setLoggedUser] = useState<string>(() => {
+    return localStorage.getItem('oncoin_user_name') || 'Visitante'
+  })
+
+  // Aplica o tema salvo no localStorage na inicialização global
   useEffect(() => {
     const savedTheme = localStorage.getItem('oncoin_app_theme') || 'classic'
     document.documentElement.setAttribute('data-theme', savedTheme)
     document.body.setAttribute('data-theme', savedTheme)
   }, [])
 
+  const handleLoginSuccess = (username?: string) => {
+    const nameToUse = username || localStorage.getItem('oncoin_user_name') || 'Visitante'
+    setLoggedUser(nameToUse)
+    localStorage.setItem('oncoin_user_name', nameToUse)
+    setCurrentPage('home')
+  }
+
+  const handleRegisterSuccess = (newName: string) => {
+    setLoggedUser(newName)
+    localStorage.setItem('oncoin_user_name', newName)
+    setCurrentPage('home')
+  }
+
   return (
     <div className="min-h-screen bg-chico-dark font-sans selection:bg-chico-gold selection:text-chico-dark transition-colors duration-300">
       {currentPage === 'login' && (
         <Login
           onNavigateToRegister={() => setCurrentPage('register')}
-          onLoginSuccess={() => setCurrentPage('home')}
+          onLoginSuccess={() => handleLoginSuccess()}
         />
       )}
 
       {currentPage === 'register' && (
         <Register
           onNavigateToLogin={() => setCurrentPage('login')}
-          onRegisterSuccess={() => setCurrentPage('home')}
+          onRegisterSuccess={handleRegisterSuccess}
         />
       )}
 
