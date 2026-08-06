@@ -13,12 +13,10 @@ export function App() {
     'login' | 'register' | 'home' | 'new-expense' | 'shopping-lists' | 'bills' | 'profile' | 'history'
   >('login')
 
-  // Nome do usuário conectado (carrega do localStorage ou assume padrão)
   const [loggedUser, setLoggedUser] = useState<string>(() => {
     return localStorage.getItem('oncoin_user_name') || 'Visitante'
   })
 
-  // Aplica o tema salvo no localStorage na inicialização global
   useEffect(() => {
     const savedTheme = localStorage.getItem('oncoin_app_theme') || 'classic'
     document.documentElement.setAttribute('data-theme', savedTheme)
