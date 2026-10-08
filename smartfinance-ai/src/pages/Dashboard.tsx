@@ -124,10 +124,10 @@ export function Dashboard({
               </h1>
               <p className="text-[10px] text-chico-sand">Painel Financeiro</p>
             </div>
+          <CurrencyWidget />
           </div>
 
-            {/* Widget da API de Cotação */}
-          <CurrencyWidget />
+
 
           <div className="flex items-center gap-2">
             <button
