@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import chicoImg from '../assets/Chico.png'
 import type { ExpenseItem } from './ExpenseRegister'
 import type { Bill } from './BillsAndInvoices'
+import { CurrencyWidget } from '../components/CurrencyWidget.tsx'
 
 interface DashboardProps {
   username?: string
@@ -35,6 +36,9 @@ export function Dashboard({
     { symbol: 'USD/BRL', name: 'Dólar Comercial', price: 'R$ 5,45', change: '-0.3%' },
     { symbol: 'PETR4', name: 'Petrobras PN', price: 'R$ 37,80', change: '+1.1%' },
   ])
+
+  {/* Widget da API de Cotação */}
+<CurrencyWidget />
 
   const [weeklyExpenseTotal, setWeeklyExpenseTotal] = useState(0)
   const [pendingBillsTotal, setPendingBillsTotal] = useState(0)
