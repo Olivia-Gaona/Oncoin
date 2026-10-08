@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import chicoImg from '../assets/Chico.png'
 import type { ExpenseItem } from './ExpenseRegister'
 import type { Bill } from './BillsAndInvoices'
-import { CurrencyWidget } from '../components/CurrencyWidget.tsx'
+import { CurrencyWidget } from '../components/CurrencyWidget'
 
 interface DashboardProps {
   username?: string
@@ -159,7 +159,7 @@ export function Dashboard({
               </p>
             </div>
 
-            <div className="bg-chico-cream/10 border border-chico-gold/30 rounded-2xl p-4 flex items-center gap-4 min-w-[220px]">
+            <div className="bg-chico-cream/10 border border-chico-gold/30 rounded-2xl p-4 flex items-center gap-4 min-w-55">
               <div>
                 <p className="text-xs text-chico-sand uppercase tracking-wider">Saldo Total</p>
                 <p className="text-2xl font-bold text-chico-gold">R$ 0,00</p>
@@ -308,7 +308,7 @@ export function Dashboard({
                       R${h.amount}
                     </span>
                     
-                    <div className="w-full bg-black/30 rounded-t-lg h-full max-h-[110px] flex items-end p-0.5 overflow-hidden border border-chico-gold/10">
+                    <div className="w-full bg-black/30 rounded-t-lg h-full max-h-27.5 flex items-end p-0.5 overflow-hidden border border-chico-gold/10">
                       <div
                         className="w-full rounded-t-md transition-all duration-700 group-hover:brightness-125"
                         style={{
