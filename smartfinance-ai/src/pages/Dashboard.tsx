@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import chicoImg from '../assets/Chico.png'
 import type { ExpenseItem } from './ExpenseRegister'
 import type { Bill } from './BillsAndInvoices'
-import { CurrencyWidget } from '../components/CurrencyWidget'
+import{ CurrencyWidget } from '../components/CurrencyWidget'
 
 interface DashboardProps {
   username?: string
