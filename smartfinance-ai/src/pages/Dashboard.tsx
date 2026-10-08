@@ -124,7 +124,6 @@ export function Dashboard({
               </h1>
               <p className="text-[10px] text-chico-sand">Painel Financeiro</p>
             </div>
-          <CurrencyWidget />
           </div>
 
 
@@ -369,6 +368,7 @@ export function Dashboard({
               </div>
             ))}
           </div>
+          <CurrencyWidget />
         </section>
 
         {/* Ações Rápidas do App */}
