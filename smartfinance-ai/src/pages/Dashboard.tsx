@@ -37,8 +37,7 @@ export function Dashboard({
     { symbol: 'PETR4', name: 'Petrobras PN', price: 'R$ 37,80', change: '+1.1%' },
   ])
 
-  {/* Widget da API de Cotação */}
-<CurrencyWidget />
+
 
   const [weeklyExpenseTotal, setWeeklyExpenseTotal] = useState(0)
   const [pendingBillsTotal, setPendingBillsTotal] = useState(0)
@@ -126,6 +125,9 @@ export function Dashboard({
               <p className="text-[10px] text-chico-sand">Painel Financeiro</p>
             </div>
           </div>
+
+            {/* Widget da API de Cotação */}
+          <CurrencyWidget />
 
           <div className="flex items-center gap-2">
             <button
