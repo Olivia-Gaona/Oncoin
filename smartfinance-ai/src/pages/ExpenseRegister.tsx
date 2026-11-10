@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import chicoImg from '../assets/Chico.png'
+import { supabase } from '../lib/supabase'
 
 interface ExpenseRegisterProps {
   onBack: () => void
@@ -24,10 +25,27 @@ export function ExpenseRegister({ onBack, onSave }: ExpenseRegisterProps) {
   const [period, setPeriod] = useState<'semanal' | 'mensal'>('mensal')
   const [successMsg, setSuccessMsg] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title || !amount) return
 
+    // 1. Gravação real no Banco de Dados Supabase (PostgreSQL)
+    const { error } = await supabase.from('transactions').insert([
+      {
+        description: title,
+        amount: parseFloat(amount),
+        type: expenseType === 'comum' ? 'expense' : 'income',
+        category: category,
+      },
+    ])
+
+    if (error) {
+      console.error('Erro ao salvar no banco:', error)
+      alert('Erro ao conectar com o banco de dados Supabase.')
+      return
+    }
+
+    // 2. Mantém o backup local no localStorage para garantir fluidez
     const newExpense: ExpenseItem = {
       id: Date.now().toString(),
       type: expenseType,
@@ -38,7 +56,6 @@ export function ExpenseRegister({ onBack, onSave }: ExpenseRegisterProps) {
       createdAt: new Date().toISOString(),
     }
 
-    // Carrega registros existentes, adiciona o novo e salva no localStorage
     const savedExpenses: ExpenseItem[] = JSON.parse(localStorage.getItem('oncoin_expenses') || '[]')
     const updatedExpenses = [newExpense, ...savedExpenses]
     localStorage.setItem('oncoin_expenses', JSON.stringify(updatedExpenses))

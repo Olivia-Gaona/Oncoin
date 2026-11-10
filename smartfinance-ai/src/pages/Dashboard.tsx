@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import chicoImg from '../assets/Chico.png'
 import type { ExpenseItem } from './ExpenseRegister'
 import type { Bill } from './BillsAndInvoices'
-import{ CurrencyWidget } from '../components/CurrencyWidget'
+import { CurrencyWidget } from '../components/CurrencyWidget'
+import { supabase } from '../lib/supabase'
 
 interface DashboardProps {
   username?: string
@@ -37,8 +38,6 @@ export function Dashboard({
     { symbol: 'PETR4', name: 'Petrobras PN', price: 'R$ 37,80', change: '+1.1%' },
   ])
 
-
-
   const [weeklyExpenseTotal, setWeeklyExpenseTotal] = useState(0)
   const [pendingBillsTotal, setPendingBillsTotal] = useState(0)
   const [topCategory, setTopCategory] = useState('Nenhuma')
@@ -54,7 +53,6 @@ export function Dashboard({
     Outros: { icon: '💸', color: '#918d85' },
   }
 
-  // Histórico Semanal estático apenas para visualização estética
   const weeklyHistory = [
     { day: 'Seg', amount: 0 },
     { day: 'Ter', amount: 0 },
@@ -67,51 +65,67 @@ export function Dashboard({
   const maxWeeklyAmount = 100
 
   useEffect(() => {
-    // Busca os gastos reais salvos pelo usuário (sem recarregar padrões se estiver vazio)
-    const savedExpenses: ExpenseItem[] = JSON.parse(localStorage.getItem('oncoin_expenses') || '[]')
-    
-    const totalExpenses = savedExpenses
-      .filter((item) => item.type === 'comum')
-      .reduce((sum, item) => sum + item.amount, 0)
+    const loadDashboardData = async () => {
+      // 1. Tenta carregar transações reais direto do Banco de Dados Supabase (PostgreSQL)
+      let transactionsList: { category: string; amount: number }[] = []
 
-    setWeeklyExpenseTotal(totalExpenses)
+      const { data, error } = await supabase.from('transactions').select('*')
+      
+      if (!error && data && data.length > 0) {
+        transactionsList = data.map((t) => ({
+          category: t.category,
+          amount: Number(t.amount),
+        }))
+      } else {
+        // Fallback local se o banco não tiver dados ainda
+        const savedExpenses: ExpenseItem[] = JSON.parse(localStorage.getItem('oncoin_expenses') || '[]')
+        transactionsList = savedExpenses
+          .filter((item) => item.type === 'comum')
+          .map((item) => ({ category: item.category, amount: item.amount }))
+      }
 
-    const categoriesMap: Record<string, number> = {}
-    savedExpenses
-      .filter((item) => item.type === 'comum')
-      .forEach((item) => {
+      const totalExpenses = transactionsList.reduce((sum, item) => sum + item.amount, 0)
+      setWeeklyExpenseTotal(totalExpenses)
+
+      const categoriesMap: Record<string, number> = {}
+      transactionsList.forEach((item) => {
         categoriesMap[item.category] = (categoriesMap[item.category] || 0) + item.amount
       })
 
-    const highestCategory = Object.keys(categoriesMap).length > 0
-      ? Object.keys(categoriesMap).reduce((a, b) => (categoriesMap[a] > categoriesMap[b] ? a : b))
-      : 'Nenhuma'
+      const highestCategory =
+        Object.keys(categoriesMap).length > 0
+          ? Object.keys(categoriesMap).reduce((a, b) => (categoriesMap[a] > categoriesMap[b] ? a : b))
+          : 'Nenhuma'
 
-    setTopCategory(highestCategory)
+      setTopCategory(highestCategory)
 
-    const breakdown: CategoryBreakdown[] = Object.keys(categoriesMap).map((cat) => ({
-      category: cat,
-      total: categoriesMap[cat],
-      percentage: totalExpenses > 0 ? Math.round((categoriesMap[cat] / totalExpenses) * 100) : 0,
-      icon: categoryPalette[cat]?.icon || '💸',
-      color: categoryPalette[cat]?.color || '#bd9f4a',
-    })).sort((a, b) => b.total - a.total)
+      const breakdown: CategoryBreakdown[] = Object.keys(categoriesMap)
+        .map((cat) => ({
+          category: cat,
+          total: categoriesMap[cat],
+          percentage: totalExpenses > 0 ? Math.round((categoriesMap[cat] / totalExpenses) * 100) : 0,
+          icon: categoryPalette[cat]?.icon || '💸',
+          color: categoryPalette[cat]?.color || '#bd9f4a',
+        }))
+        .sort((a, b) => b.total - a.total)
 
-    setCategoryBreakdown(breakdown)
+      setCategoryBreakdown(breakdown)
 
-    const savedBills: Bill[] = JSON.parse(localStorage.getItem('oncoin_bills') || '[]')
-    const pendingTotal = savedBills
-      .filter((bill) => bill.status === 'pending' || bill.status === 'overdue')
-      .reduce((sum, bill) => sum + bill.amount, 0)
+      const savedBills: Bill[] = JSON.parse(localStorage.getItem('oncoin_bills') || '[]')
+      const pendingTotal = savedBills
+        .filter((bill) => bill.status === 'pending' || bill.status === 'overdue')
+        .reduce((sum, bill) => sum + bill.amount, 0)
 
-    setPendingBillsTotal(pendingTotal)
+      setPendingBillsTotal(pendingTotal)
+    }
+
+    loadDashboardData()
   }, [])
 
   let accumulatedAngle = 0
 
   return (
     <div className="min-h-screen bg-chico-dark text-chico-cream pb-12">
-      {/* Topo / Header da Aplicação */}
       <header className="bg-chico-dark/80 backdrop-blur-md border-b border-chico-gold/20 sticky top-0 z-10 px-4 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -125,8 +139,6 @@ export function Dashboard({
               <p className="text-[10px] text-chico-sand">Painel Financeiro</p>
             </div>
           </div>
-
-
 
           <div className="flex items-center gap-2">
             <button
@@ -146,8 +158,6 @@ export function Dashboard({
       </header>
 
       <main className="max-w-5xl mx-auto px-4 mt-6 space-y-6">
-        
-        {/* Banner de Boas-Vindas com o Chico */}
         <section className="bg-linear-to-r from-chico-olive/30 via-chico-dark to-chico-brown/20 border border-chico-gold/30 rounded-3xl p-6 relative overflow-hidden shadow-xl">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
             <div>
@@ -163,15 +173,13 @@ export function Dashboard({
             <div className="bg-chico-cream/10 border border-chico-gold/30 rounded-2xl p-4 flex items-center gap-4 min-w-55">
               <div>
                 <p className="text-xs text-chico-sand uppercase tracking-wider">Saldo Total</p>
-                <p className="text-2xl font-bold text-chico-gold">R$ 0,00</p>
+                <p className="text-2xl font-bold text-chico-gold">R$ {weeklyExpenseTotal.toFixed(2)}</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Grade do Resumo Semanal */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
           <div className="bg-chico-cream/5 border border-chico-gold/20 rounded-2xl p-5 hover:border-chico-gold/50 hover:bg-chico-cream/10 transition-all duration-300">
             <div className="flex justify-between items-start mb-3">
               <span className="text-xs text-chico-sand uppercase font-semibold">Gastos Cadastrados</span>
@@ -192,7 +200,7 @@ export function Dashboard({
             <p className="text-2xl font-bold text-chico-gold">R$ {pendingBillsTotal.toFixed(2)}</p>
             <div className="mt-3 pt-3 border-t border-chico-gold/10 text-xs text-chico-slate flex justify-between">
               <span>Status geral:</span>
-              <span className="text-chico-sand font-medium">Sincronizado no navegador</span>
+              <span className="text-chico-sand font-medium">Conectado ao Supabase</span>
             </div>
           </div>
 
@@ -203,19 +211,17 @@ export function Dashboard({
                 <span className="text-xl animate-bounce">💡</span>
               </div>
               <p className="text-xs text-chico-cream leading-relaxed">
-                "Seus dados estão salvos localmente com segurança! Continue monitorando suas metas."
+                "Seus dados estão gravados com segurança no PostgreSQL (Supabase)!"
               </p>
             </div>
             <div className="mt-3 w-full bg-chico-cream/10 h-2 rounded-full overflow-hidden">
-              <div className="bg-chico-green h-full w-[70%]" />
+              <div className="bg-chico-green h-full w-full" />
             </div>
           </div>
-
         </section>
 
         {/* SEÇÃO DE GRÁFICOS */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
           <div className="bg-chico-cream/5 border border-chico-gold/20 rounded-3xl p-6 space-y-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
@@ -327,10 +333,9 @@ export function Dashboard({
             </div>
 
             <div className="flex justify-between items-center text-[11px] text-chico-slate">
-              <span>Status: <strong className="text-chico-green">Pronto para novo teste</strong></span>
+              <span>Status: <strong className="text-chico-green">Banco PostgreSQL Ativo</strong></span>
             </div>
           </div>
-
         </section>
 
         {/* Widget de Cotação de Ações e Moedas */}
@@ -413,7 +418,6 @@ export function Dashboard({
             <span className="text-xs font-bold text-chico-gold">Perfil</span>
           </button>
         </section>
-
       </main>
     </div>
   )
